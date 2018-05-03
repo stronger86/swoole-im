@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>基于websocket简单群聊</title>
+    <style type="text/css">
+        .talk_con {width: 600px;height: 500px;border: 1px solid #666;margin: 50px auto 0;background: #f9f9f9;}
+        .talk_show {width: 580px;height: 420px;border: 1px solid #666;background: #fff;margin: 10px auto 0;overflow: auto;}
+        .talk_input {width: 580px;margin: 10px auto 0;}
+        .whotalk {width: 80px;height: 30px;float: left;outline: none;}
+        .talk_word {width: 472px;height: 48px;padding: 0px;float: left;margin-left: 0px;outline: none;text-indent: 10px;}
+        .talk_sub {width: 66px;height: 36px;float: left;margin-top: 13px;margin-left: 10px;padding: 6px 12px;background: #0181cc;color: #fff;}
+        .atalk {margin: 10px;}
+        .atalk span {display: inline-block;background: #0181cc;border-radius: 10px;color: #fff;padding: 5px 10px;}
+        .btalk {margin: 10px;text-align: right;}
+        .btalk span {display: inline-block;background: #ef8201;border-radius: 10px;color: #fff;padding: 5px 10px;}
+        .ctalk {margin: 10px;text-align: center;color: #999}
+        .ctalk span {font-size: 12px;}
+    </style>
+</head>
+<body>
+<div class="talk_con">
+    <div class="talk_show" id="words"></div>
+    <div class="talk_input">
+        <input type="text" class="talk_word" id="talkwords">
+        <input type="button" value="发送" class="talk_sub" id="talksub">
+    </div>
+</div>
+<script>
+    const ws = new WebSocket("ws://193.112.120.195:9099");
+    ws.addEventListener('open', function (e) {
+        console.log('连接成功！');
+    });
+    ws.addEventListener('message', function (e) {
+        var data = JSON.parse(e.data);
+        console.log(data);
+        var str = '';
+        if (data.type == 'connection') {
+            str = '<div class="ctalk"><span id="csay">' + data.message + '</span></div>'
+        }
+        if (data.type == 'talk') {
+            c = (data.sender == true) ? 'btalk' : 'atalk';
+            str = '<div class="' + c + '"><span>' + data.message + '</span></div>';
+        }
+        if(data.type == 'close') {
+            str = '<div class="ctalk"><span id="csay">' + data.message + '</span></div>'
+        }
+        addTalk(str);
+    });
+    ws.addEventListener('close', function (e) {
+        console.log('退出群聊！');
+    });
+    document.getElementById("talksub").onclick = function () {
+        var value = document.getElementById("talkwords").value;
+        if (value == "") {
+            // 消息为空时弹窗
+            alert("消息不能为空");
+            return;
+        }
+        doSend(value);
+        document.getElementById("talkwords").value = '';
+    };
+    function doSend(value) {
+        ws.send(value);
+    }
+    function addTalk(msg) {
+        var Words = document.getElementById("words");
+        Words.innerHTML = Words.innerHTML + msg;
+    }
+</script>
+</body>
+</html>
